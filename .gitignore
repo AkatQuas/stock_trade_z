@@ -1,0 +1,9 @@
+data/
+data_check/
+*.log
+log/
+
+.env
+stocklist_*.csv
+
+.claude/*.local.json

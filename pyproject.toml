@@ -1,0 +1,18 @@
+[project]
+name = "stock_trade_z"
+version = "0.1.0"
+description = "Stock trading and risk detection tools"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pandas==2.3.0",
+  "tqdm==4.66.4",
+  "tushare==1.4.21",
+  "scipy==1.14.1",
+  "python-dotenv==1.2.1",
+  "pysnowball==0.1.8",
+  "baostock>=0.8.9",
+]
+
+[tool.uv]
+# uv-specific settings can be added here

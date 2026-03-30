@@ -1,0 +1,156 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Test Try",
+      "command": ".venv/bin/python",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "args": ["src/stock_trade_z/try_play.py"],
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Check One Symbol",
+      "command": ".venv/bin/python",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "args": ["src/stock_trade_z/check_code.py"],
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Fetch K Line",
+      "command": ".venv/bin/python",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "args": [
+        "src/stock_trade_z/fetch_kline.py",
+        "--start",
+        "20240101",
+        "--end",
+        "today",
+        "--stocklist",
+        "./stocklist.good.csv",
+        "--out",
+        "./data",
+        "--workers",
+        "6"
+      ],
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Fetch HS300 and ZZ500 List",
+      "command": ".venv/bin/python",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "args": ["src/stock_trade_z/fetch_stocklist_300_500.py"],
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Fetch Stock List",
+      "command": ".venv/bin/python",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "args": ["src/stock_trade_z/fetch_stocklist.py"],
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Select Stock",
+      "command": ".venv/bin/python",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "args": [
+        "src/stock_trade_z/select_stock.py",
+        "--data-dir",
+        "./data"
+        // "--date",
+        // "20251215"
+      ],
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Detect Risk Stock",
+      "command": ".venv/bin/python",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "args": ["src/stock_trade_z/detect_risk.py", "--data-dir", "./data"],
+      "presentation": {
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Update Stock List in good.csv",
+      "detail": "Add or remove code in your favorite list (modify csv file)",
+      "command": ".venv/bin/python",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "args": [
+        "src/stock_trade_z/update_to_goodlist.py",
+        "--stocklist",
+        "./stocklist.good.csv"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Sort the stocklist csv file",
+      "detail": "This will also fill the latest row data from total list",
+      "command": ".venv/bin/python",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "args": [
+        "src/stock_trade_z/sort_csv.py",
+        "--stocklist",
+        // "./src/stock_trade_z/stocklist.20260225.csv"
+        "./stocklist.good.csv",
+        "--replace"
+      ],
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Fetch then Select & Detect Risk",
+      "detail": "Fetch K line data and then Select & Detect Risk",
+      "dependsOn": ["Fetch K Line", "Select Stock", "Detect Risk Stock"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,14 +1,15 @@
 # backend/j_industry_service.py
 from __future__ import annotations
 
+import re
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Union
-import re
-import pandas as pd
-from datetime import datetime
 
-from Selector import compute_kdj
-from select_stock import load_data
+import pandas as pd
+
+from lib.compute import compute_kdj
+from lib.load_data import load_data
 
 
 def _list_codes_from_data_dir(data_dir: Union[str, Path]) -> List[str]:
@@ -76,7 +77,7 @@ def compute_j_industry_distribution(
     stocklist_path: Union[str, Path] = "stocklist.csv",
     j_threshold: float = 15.0,
     export_excel_path: Optional[Union[str, Path]] = None,
-    trade_date: Optional[Union[str, datetime]] = None,   # ← 新增
+    trade_date: Optional[Union[str, datetime]] = None,  # ← 新增
 ) -> Dict:
     """
     计算“指定交易日(或其之前最近一日)的日线J值 < 阈值”的行业分布，返回汇总JSON（无明细）。
@@ -105,8 +106,12 @@ def compute_j_industry_distribution(
     codes = _list_codes_from_data_dir(data_dir)
     if not codes:
         return {
-            "meta": {"total_codes": 0, "selected_count": 0, "j_threshold": j_threshold,
-                     "trade_date": str(trade_dt.date()) if trade_dt is not None else None},
+            "meta": {
+                "total_codes": 0,
+                "selected_count": 0,
+                "j_threshold": j_threshold,
+                "trade_date": str(trade_dt.date()) if trade_dt is not None else None,
+            },
             "industry_counts": [],
         }
 
@@ -136,7 +141,11 @@ def compute_j_industry_distribution(
                 continue
 
         kd = compute_kdj(df)
-        j_map[code] = float(kd.iloc[-1]["J"]) if (kd is not None and not kd.empty) else float("nan")
+        j_map[code] = (
+            float(kd.iloc[-1]["J"])
+            if (kd is not None and not kd.empty)
+            else float("nan")
+        )
 
     df_j_all = pd.DataFrame({"代码": list(j_map.keys()), "J(日)": list(j_map.values())})
 
@@ -150,7 +159,10 @@ def compute_j_industry_distribution(
     selected_all["行业"] = selected_all["行业"].fillna("未知")
 
     industry_counts = (
-        selected_all["行业"].value_counts().rename_axis("行业").reset_index(name="股票数")
+        selected_all["行业"]
+        .value_counts()
+        .rename_axis("行业")
+        .reset_index(name="股票数")
     )
 
     # 6) 可选导出
@@ -168,16 +180,22 @@ def compute_j_industry_distribution(
         },
         "industry_counts": industry_counts.to_dict(orient="records"),
     }
-    
+
+
 if __name__ == "__main__":
     import argparse
     import json
 
     parser = argparse.ArgumentParser(description="计算 J<阈值 股票行业分布")
     parser.add_argument("--data_dir", type=str, default="./data", help="历史数据目录")
-    parser.add_argument("--stocklist", type=str, default="stocklist.csv", help="stocklist.csv 路径")
+    parser.add_argument("--stocklist", type=Path, help="stocklist.csv 路径")
     parser.add_argument("--j_threshold", type=float, default=15.0, help="J(日) 阈值")
-    parser.add_argument("--trade_date", type=str, default=None, help="交易日 (YYYYMMDD / YYYY-MM-DD，可选)")
+    parser.add_argument(
+        "--trade_date",
+        type=str,
+        default=None,
+        help="交易日 (YYYYMMDD / YYYY-MM-DD，可选)",
+    )
     args = parser.parse_args()
 
     result = compute_j_industry_distribution(
