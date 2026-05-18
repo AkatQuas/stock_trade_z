@@ -1,0 +1,43 @@
+name: Daily Stock Trade
+
+on:
+  schedule:
+    # Runs at 17:00 UTC+8 (09:00 UTC) every day
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  trade:
+    # Use official uv Docker image (pre-installed uv + Python 3.11)
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/astral-sh/uv:python3.11-bookworm
+    env:
+      TQDM_DISABLE: '1'
+      TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+      LARK_APP_ID: ${{secrets.LARK_APP_ID}}
+      LARK_SECRET: ${{secrets.LARK_SECRET}}
+      ME_UNION_ID: ${{secrets.ME_UNION_ID}}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # uv is pre-installed in the container - no setup needed
+      - name: Install dependencies with uv sync
+        run: |
+          uv sync
+
+      - name: Fetch stock data
+        run: |
+          uv run python src/stock_trade_z/fetch_kline.py --start 20240101 --stocklist ./stocklist.good.csv --out ./data
+
+      - name: Select potential stock
+        run: |
+          uv run python src/stock_trade_z/select_stock.py --data-dir ./data --send-lark
+
+      # - name: Detect risk stock
+      #   run: |
+      #     uv run python src/stock_trade_z/detect_risk.py --data-dir ./data --send-lark

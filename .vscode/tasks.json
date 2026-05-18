@@ -89,6 +89,7 @@
         "src/stock_trade_z/select_stock.py",
         "--data-dir",
         "./data"
+        // "--send_lark"
         // "--date",
         // "20251215"
       ],
@@ -104,7 +105,12 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "args": ["src/stock_trade_z/detect_risk.py", "--data-dir", "./data"],
+      "args": [
+        "src/stock_trade_z/detect_risk.py",
+        "--data-dir",
+        "./data",
+        "--send-lark"
+      ],
       "presentation": {
         "reveal": "always"
       },

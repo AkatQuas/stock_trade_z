@@ -12,7 +12,12 @@ dependencies = [
   "python-dotenv==1.2.1",
   "pysnowball==0.1.8",
   "baostock>=0.8.9",
+  "lark-oapi>=1.6.5",
 ]
 
 [tool.uv]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+default = true
 # uv-specific settings can be added here

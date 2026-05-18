@@ -1,25 +1,60 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 from typing import Dict, List
 
-import pandas as pd
 from lib.data_utils import load_data_folder
-from lib.load_data import load_data
 from lib.load_stocklist import load_total_stocklist
 from lib.logger import get_logger
-from lib.risk_selectors import (ATRVolatilitySelector, MADeclineSelector,
-                                RSIExtremesSelector, VolumeSelloffSelector)
+from lib.risk_selectors import (
+    ATRVolatilitySelector,
+    MADeclineSelector,
+    RSIExtremesSelector,
+    VolumeSelloffSelector,
+)
+from lib.send_lark_message import build_interactive_card, send_message
 from lib.time import get_today_name
 
 logger = get_logger("risk")
+
+
+def build_lark_card(
+    trade_date, aggregated: Dict[str, List[str]], stocklist: list
+) -> dict:
+    """Build an interactive card for Lark with risk detection results."""
+    title = f"⚠️ 风险检测 - {trade_date.date()} {trade_date.day_name()}"
+
+    if not aggregated:
+        fields = [{"is_short": False, "content": "✅ 未检测到风险股票"}]
+        return build_interactive_card(title=title, fields=fields)
+
+    fields = []
+    # Sort by number of risk flags, most risky first
+    for code, reasons in sorted(
+        aggregated.items(), key=lambda kv: len(kv[1]), reverse=True
+    ):
+        info = next((s for s in stocklist if s["symbol"] == code), None)
+        if info:
+            name = info.get("name", "")
+            url = info.get("xueqiu_url", "")
+            reason_str = ", ".join(reasons)
+            fields.append(
+                {
+                    "is_short": False,
+                    "content": f"[**{code} {name}**]({url})\n{len(reasons)}个风险: {reason_str}",
+                }
+            )
+
+    return build_interactive_card(title=title, fields=fields, template="yellow")
 
 
 def main():
     p = argparse.ArgumentParser(description="Run risk selectors over CSV K-line data folder")
     p.add_argument("--data-dir", type=Path, required=True, help="行情数据目录， CSV K线数据")
     p.add_argument("--date", help="交易日 YYYY-MM-DD，默认=数据最新日期")
+    p.add_argument("--send-lark", action="store_true", help="发送Lark通知")
     args = p.parse_args()
 
     data_dir = Path(args.data_dir)
@@ -52,7 +87,7 @@ def main():
     for name, sel in selectors:
         try:
             hits = sel.select(trade_date, data)
-        except Exception as e:
+        except Exception:
             logger.exception("selector %s raised", name)
             hits = []
         per_selector_hits[name] = hits
@@ -91,6 +126,19 @@ def main():
         logger.info("\n%s", "\n".join(out_lines))
     else:
         logger.info("No risky symbols detected by selectors.")
+
+    # --- 发送Lark通知 ---
+    if args.send_lark:
+        card = build_lark_card(trade_date, aggregated, stocklist)
+        receive_id = os.getenv("ME_UNION_ID")
+        if receive_id:
+            success = send_message(receive_id, card, msg_type="interactive")
+            if success:
+                logger.info("✅ 已发送风险检测结果到Lark")
+            else:
+                logger.error("❌ 发送Lark通知失败")
+        else:
+            logger.warning("ME_UNION_ID 未配置，跳过Lark通知")
 
     logger.info("Done. %s", get_today_name())
 
